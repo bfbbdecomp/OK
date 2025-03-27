@@ -1,22 +1,24 @@
-use argp::FromArgs;
+mod args;
+mod diff;
 
-/// Reach new heights
-#[derive(FromArgs, Debug)]
-struct GoUp {
-    /// Foo
-    #[argp(switch, short = 'j')]
-    jump: bool,
-
-    /// How high to go.
-    #[argp(option)]
-    height: usize,
-
-    /// An optional nickname for the pilot.
-    #[argp(option)]
-    pilot_nickname: Option<String>,
-}
+use args::OKArgs;
+use diff::find_differences;
+use objdiff_core::bindings::report::Report;
 
 fn main() {
-    let up: GoUp = argp::parse_args_or_exit(argp::DEFAULT);
-    println!("{:?}", up);
+    let args: OKArgs = argp::parse_args_or_exit(argp::DEFAULT);
+
+    let previous: Report = load_report(&args.previous);
+    let current: Report = load_report(&args.current);
+
+    find_differences(previous, current);
+
+    if let Some(action) = args.action {
+        println!("do action: {:?}", action);
+    }
+}
+
+fn load_report(path: &str) -> Report {
+    let bytes = std::fs::read(path).expect("Unable to read previous report file");
+    Report::parse(&bytes).expect("Unable to parse the report! What have you done??")
 }
