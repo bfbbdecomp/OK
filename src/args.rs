@@ -13,10 +13,6 @@ pub struct OKArgs {
     #[argp(option)]
     pub current: String,
 
-    /// Path to the progress commit data
-    #[argp(option)]
-    pub commit: String,
-
     #[argp(subcommand)]
     pub action: Option<OKAction>,
 }
@@ -37,6 +33,10 @@ pub struct PullRequest {}
 #[derive(FromArgs, Debug)]
 #[argp(subcommand, name = "discord")]
 pub struct PostToDiscord {
+    /// Path to the progress commit data
+    #[argp(option)]
+    pub commit: String,
+
     /// Include a witty quip at the end of the progress report
     #[argp(switch)]
     pub add_commentary: bool,

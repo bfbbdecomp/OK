@@ -1,14 +1,15 @@
 use std::collections::HashMap;
 
 use objdiff_core::bindings::report::{Report, ReportItem, ReportItemMetadata, ReportUnit};
+use serde::Serialize;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct DifferenceReport {
     pub functions: Vec<Difference>,
     pub sections: Vec<Difference>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Difference {
     pub unit: String,
     pub old: ReportItem,

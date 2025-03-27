@@ -3,12 +3,11 @@ mod commit;
 mod diff;
 
 use std::{
-    fs::{File, read},
-    io::BufReader,
-    process::Command,
+    fs::File,
+    io::{BufReader, Write},
 };
 
-use args::OKArgs;
+use args::{OKAction, OKArgs};
 use commit::Commit;
 use diff::find_differences;
 use objdiff_core::bindings::report::Report;
@@ -18,29 +17,24 @@ fn main() {
 
     let previous = load_report(&args.previous);
     let current = load_report(&args.current);
-    let commit = load_commit(&args.commit);
 
     let diffs = find_differences(previous.units, current.units);
 
-    for diff in diffs.functions {
-        println!(
-            "{} {} {} {} ",
-            diff.unit, diff.old.name, diff.old.fuzzy_match_percent, diff.new.fuzzy_match_percent
-        );
-    }
-    println!("SECTIONS:");
-    for diff in diffs.sections {
-        println!(
-            "{} {} {:?} {:?} ",
-            diff.unit, diff.old.name, diff.old, diff.new
-        );
-    }
+    let diff_json = serde_json::to_string_pretty(&diffs).expect("Failed to serialize diffs");
+    let mut file = File::create("diff.json").unwrap();
+    file.write_all(diff_json.as_bytes()).unwrap();
 
     if let Some(action) = args.action {
         println!("do action: {:?}", action);
-    }
 
-    println!("{:?}", commit);
+        match action {
+            OKAction::PullRequest(_) => {}
+            OKAction::PostToDiscord(post_to_discord) => {
+                let commit = load_commit(&post_to_discord.commit);
+                println!("commit: {:?}", commit);
+            }
+        }
+    }
 }
 
 fn load_report(path: &str) -> Report {
