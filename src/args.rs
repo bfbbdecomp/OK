@@ -13,6 +13,10 @@ pub struct OKArgs {
     #[argp(option)]
     pub current: String,
 
+    /// Path to the progress commit data
+    #[argp(option)]
+    pub commit: String,
+
     #[argp(subcommand)]
     pub action: Option<OKAction>,
 }
