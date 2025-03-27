@@ -1,4 +1,3 @@
-use core::str;
 use std::collections::HashMap;
 
 use objdiff_core::bindings::report::{Report, ReportItem, ReportItemMetadata};
@@ -18,13 +17,9 @@ pub struct Difference {
 
 pub type UnitItem = (String, ReportItem);
 
-fn metadata_to_key(metadata: &Option<ReportItemMetadata>) -> String {
-    serde_json::to_string(metadata).unwrap_or_else(|_| "null".to_string()) // Convert metadata to JSON
-}
-
 pub fn find_differences(previous: Report, current: Report) -> DifferenceReport {
-    let (prev_fns, prev_secs) = relevant_items(&previous);
-    let (curr_fns, curr_secs) = relevant_items(&current);
+    let (prev_fns, prev_secs) = extract_items(&previous);
+    let (curr_fns, curr_secs) = extract_items(&current);
 
     let fn_diffs = get_item_differences(prev_fns, curr_fns);
     let sec_diffs = get_item_differences(prev_secs, curr_secs);
@@ -78,20 +73,21 @@ pub fn get_item_differences(
     differences
 }
 
-fn relevant_items(report: &Report) -> (Vec<UnitItem>, Vec<UnitItem>) {
-    // We only care about Bob code
-    // But we might want to report on everything if we're looking at a PR...
+// Need to hash the metadata this way because ReportItemMetadata doesn't derive Eq
+fn metadata_to_key(metadata: &Option<ReportItemMetadata>) -> String {
+    serde_json::to_string(metadata).unwrap_or_else(|_| "null".to_string()) // Convert metadata to JSON
+}
+
+fn extract_items(report: &Report) -> (Vec<UnitItem>, Vec<UnitItem>) {
     let functions = report
         .units
         .iter()
-        .filter(|u| u.name.contains("/SB/"))
         .flat_map(|u| u.functions.iter().map(|f| (u.name.clone(), f.clone())))
         .collect();
 
     let sections = report
         .units
         .iter()
-        .filter(|u| u.name.contains("/SB/"))
         .flat_map(|u| u.sections.iter().map(|f| (u.name.clone(), f.clone())))
         .collect();
 
