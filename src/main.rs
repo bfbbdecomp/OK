@@ -11,7 +11,14 @@ fn main() {
     let previous: Report = load_report(&args.previous);
     let current: Report = load_report(&args.current);
 
-    find_differences(previous, current);
+    let diffs = find_differences(previous, current);
+
+    for diff in diffs {
+        println!(
+            "{}: {} {} ",
+            diff.item.name, diff.old_fuzzy_match, diff.new_fuzzy_match
+        );
+    }
 
     if let Some(action) = args.action {
         println!("do action: {:?}", action);

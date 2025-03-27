@@ -1,31 +1,54 @@
-use objdiff_core::bindings::report::{Report, ReportItem};
+use std::collections::HashMap;
+
+use objdiff_core::bindings::report::{Report, ReportItem, ReportItemMetadata};
 
 #[derive(Debug)]
 pub struct Difference {
-    previous: ReportItem,
-    current: ReportItem,
+    pub item: ReportItem,
+    pub old_fuzzy_match: f32,
+    pub new_fuzzy_match: f32,
+}
+
+fn metadata_to_key(metadata: &Option<ReportItemMetadata>) -> String {
+    serde_json::to_string(metadata).unwrap_or_else(|_| "null".to_string()) // Convert metadata to JSON
 }
 
 pub fn find_differences(previous: Report, current: Report) -> Vec<Difference> {
     let prev_fns = relevant_functions(&previous);
     let curr_fns = relevant_functions(&current);
 
-    for f in curr_fns {
-        let meta = f.metadata.clone().unwrap();
-        if meta.demangled_name.is_none() {
-            println!("{:?}", f);
+    let mut old_map: HashMap<(String, u64, String), f32> = HashMap::new();
+
+    for item in prev_fns {
+        old_map.insert(
+            (
+                item.name.clone(),
+                item.size,
+                metadata_to_key(&item.metadata),
+            ),
+            item.fuzzy_match_percent,
+        );
+    }
+
+    let mut differences = Vec::new();
+
+    for item in curr_fns {
+        if let Some(&old_fuzzy_match) = old_map.get(&(
+            item.name.clone(),
+            item.size,
+            metadata_to_key(&item.metadata),
+        )) {
+            if old_fuzzy_match != item.fuzzy_match_percent {
+                differences.push(Difference {
+                    item: item.clone(),
+                    old_fuzzy_match,
+                    new_fuzzy_match: item.fuzzy_match_percent,
+                });
+            }
         }
     }
-    /*
-    let diffs: Vec<Difference> = prev_fns
-    .iter()
-    .filter(|f| {
-        let curr = curr_fns.iter().find(|x| x.metadata.unwrap().demangled_name)
-        f.fuzzy_match_percent
-    });
-    */
 
-    vec![]
+    differences
 }
 
 pub fn relevant_functions(report: &Report) -> Vec<&ReportItem> {
