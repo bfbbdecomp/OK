@@ -11,7 +11,7 @@ fn main() {
     let previous: Report = load_report(&args.previous);
     let current: Report = load_report(&args.current);
 
-    let diffs = find_differences(previous, current);
+    let diffs = find_differences(previous.units, current.units);
 
     for diff in diffs.functions {
         println!(

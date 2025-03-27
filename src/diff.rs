@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use objdiff_core::bindings::report::{Report, ReportItem, ReportItemMetadata};
+use objdiff_core::bindings::report::{Report, ReportItem, ReportItemMetadata, ReportUnit};
 
 #[derive(Debug)]
 pub struct DifferenceReport {
@@ -17,9 +17,9 @@ pub struct Difference {
 
 pub type UnitItem = (String, ReportItem);
 
-pub fn find_differences(previous: Report, current: Report) -> DifferenceReport {
-    let (prev_fns, prev_secs) = extract_items(&previous);
-    let (curr_fns, curr_secs) = extract_items(&current);
+pub fn find_differences(previous: Vec<ReportUnit>, current: Vec<ReportUnit>) -> DifferenceReport {
+    let (prev_fns, prev_secs) = extract_items(previous);
+    let (curr_fns, curr_secs) = extract_items(current);
 
     let fn_diffs = get_item_differences(prev_fns, curr_fns);
     let sec_diffs = get_item_differences(prev_secs, curr_secs);
@@ -78,15 +78,13 @@ fn metadata_to_key(metadata: &Option<ReportItemMetadata>) -> String {
     serde_json::to_string(metadata).unwrap_or_else(|_| "null".to_string()) // Convert metadata to JSON
 }
 
-fn extract_items(report: &Report) -> (Vec<UnitItem>, Vec<UnitItem>) {
-    let functions = report
-        .units
+fn extract_items(units: Vec<ReportUnit>) -> (Vec<UnitItem>, Vec<UnitItem>) {
+    let functions = units
         .iter()
         .flat_map(|u| u.functions.iter().map(|f| (u.name.clone(), f.clone())))
         .collect();
 
-    let sections = report
-        .units
+    let sections = units
         .iter()
         .flat_map(|u| u.sections.iter().map(|f| (u.name.clone(), f.clone())))
         .collect();
