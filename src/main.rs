@@ -14,10 +14,8 @@ fn main() {
     let diffs = find_differences(previous, current);
 
     for diff in diffs {
-        println!(
-            "{}: {} {} ",
-            diff.item.name, diff.old_fuzzy_match, diff.new_fuzzy_match
-        );
+        println!("{:?} {:?} ", diff.old_item, diff.new_item);
+        break;
     }
 
     if let Some(action) = args.action {

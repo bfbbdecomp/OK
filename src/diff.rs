@@ -4,9 +4,8 @@ use objdiff_core::bindings::report::{Report, ReportItem, ReportItemMetadata};
 
 #[derive(Debug)]
 pub struct Difference {
-    pub item: ReportItem,
-    pub old_fuzzy_match: f32,
-    pub new_fuzzy_match: f32,
+    pub old_item: ReportItem,
+    pub new_item: ReportItem,
 }
 
 fn metadata_to_key(metadata: &Option<ReportItemMetadata>) -> String {
@@ -17,7 +16,7 @@ pub fn find_differences(previous: Report, current: Report) -> Vec<Difference> {
     let prev_fns = relevant_functions(&previous);
     let curr_fns = relevant_functions(&current);
 
-    let mut old_map: HashMap<(String, u64, String), f32> = HashMap::new();
+    let mut old_map: HashMap<(String, u64, String), &ReportItem> = HashMap::new();
 
     for item in prev_fns {
         old_map.insert(
@@ -26,23 +25,22 @@ pub fn find_differences(previous: Report, current: Report) -> Vec<Difference> {
                 item.size,
                 metadata_to_key(&item.metadata),
             ),
-            item.fuzzy_match_percent,
+            item,
         );
     }
 
     let mut differences = Vec::new();
 
     for item in curr_fns {
-        if let Some(&old_fuzzy_match) = old_map.get(&(
+        if let Some(&old_item) = old_map.get(&(
             item.name.clone(),
             item.size,
             metadata_to_key(&item.metadata),
         )) {
-            if old_fuzzy_match != item.fuzzy_match_percent {
+            if old_item.fuzzy_match_percent != item.fuzzy_match_percent {
                 differences.push(Difference {
-                    item: item.clone(),
-                    old_fuzzy_match,
-                    new_fuzzy_match: item.fuzzy_match_percent,
+                    new_item: item.clone(),
+                    old_item: old_item.clone(),
                 });
             }
         }
