@@ -5,15 +5,19 @@ use serde::Serialize;
 
 #[derive(Debug, Serialize)]
 pub struct DifferenceReport {
-    pub functions: Vec<Difference>,
-    pub sections: Vec<Difference>,
+    pub functions: Vec<ReportItemDifference>,
+    pub sections: Vec<ReportItemDifference>,
 }
 
-#[derive(Debug, Serialize)]
-pub struct Difference {
-    pub unit: String,
-    pub old: ReportItem,
-    pub new: ReportItem,
+#[derive(Debug, Serialize, Clone)]
+pub struct ReportItemDifference {
+    pub unit_name: String,
+    pub name: String,
+    pub size: u64,
+    pub old_fuzzy_match_percent: f32,
+    pub new_fuzzy_match_percent: f32,
+    pub demangled_name: Option<String>,
+    pub virtual_address: Option<u64>,
 }
 
 pub type UnitItem = (String, ReportItem);
@@ -34,7 +38,7 @@ pub fn find_differences(previous: Vec<ReportUnit>, current: Vec<ReportUnit>) -> 
 pub fn get_item_differences(
     prev_items: Vec<UnitItem>,
     curr_items: Vec<UnitItem>,
-) -> Vec<Difference> {
+) -> Vec<ReportItemDifference> {
     // We need to hash everything but fuzzy match percent
     // and we also need to include the unit, name is not reliable.
     // the name 'GXSetTexCoordGen' appears across multiple units
@@ -62,10 +66,15 @@ pub fn get_item_differences(
             metadata_to_key(&item.metadata),
         )) {
             if old_item.fuzzy_match_percent != item.fuzzy_match_percent {
-                differences.push(Difference {
-                    unit,
-                    new: item,
-                    old: old_item.clone(),
+                let metadata = item.metadata.as_ref();
+                differences.push(ReportItemDifference {
+                    unit_name: unit,
+                    name: item.name,
+                    size: item.size,
+                    old_fuzzy_match_percent: old_item.fuzzy_match_percent,
+                    new_fuzzy_match_percent: item.fuzzy_match_percent,
+                    demangled_name: metadata.and_then(|x| x.demangled_name.clone()),
+                    virtual_address: metadata.and_then(|x| x.virtual_address),
                 });
             }
         }

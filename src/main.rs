@@ -1,6 +1,7 @@
 mod args;
 mod commit;
 mod diff;
+mod pr;
 
 use std::{
     fs::File,
@@ -10,7 +11,8 @@ use std::{
 use args::{OKAction, OKArgs};
 use commit::Commit;
 use diff::find_differences;
-use objdiff_core::bindings::report::Report;
+use objdiff_core::bindings::report::{Report, ReportItem};
+use pr::PullRequestReport;
 
 fn main() {
     let args: OKArgs = argp::parse_args_or_exit(argp::DEFAULT);
@@ -26,7 +28,10 @@ fn main() {
 
     if let Some(action) = args.action {
         match action {
-            OKAction::PullRequest(_) => {}
+            OKAction::PullRequest(_) => {
+                let pr_report = PullRequestReport::new(diffs);
+                println!("{}", pr_report.to_string());
+            }
             OKAction::PostToDiscord(post_to_discord) => {
                 let _ = load_commit(&post_to_discord.commit);
                 //println!("commit: {:?}", commit);
