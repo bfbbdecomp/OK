@@ -83,7 +83,8 @@ impl PullRequestReport {
 
         println!("{:?}", progressions);
 
-        let regressions_exist = regressions.len() > 0;
+        let regression_count = regressions.len();
+        let regressions_exist = regression_count > 0;
 
         let header = match regressions_exist {
             false => "🆗 ✅",
@@ -92,7 +93,7 @@ impl PullRequestReport {
 
         let regressions_header = match regressions_exist {
             false => "No Regressions 🎉".to_owned(),
-            true => "foo".to_owned(),
+            true => format!("Regressions: {regression_count}"),
         };
         let regressions_string = match regressions_exist {
             false => "".to_owned(),
@@ -102,13 +103,14 @@ impl PullRequestReport {
             }
         };
 
-        let progress_header = match progressions.len() {
-            0 => "No Progress 🤔".to_owned(),
-            _ => "foo".to_owned(),
+        let progress_count = progressions.len();
+        let progress_header = match progress_count {
+            0 => "No Progress".to_owned(),
+            _ => format!("Progress: {progress_count}"),
         };
 
-        let progress_string = match progressions.len() {
-            0 => "".to_owned(),
+        let progress_string = match progress_count {
+            0 => "What is this PR doing? 🤔".to_owned(),
             _ => {
                 let strs: Vec<String> = progressions.iter().map(|x| x.0.to_string()).collect();
                 strs.join("\n")
