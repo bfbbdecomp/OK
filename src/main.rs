@@ -25,13 +25,11 @@ fn main() {
     file.write_all(diff_json.as_bytes()).unwrap();
 
     if let Some(action) = args.action {
-        println!("do action: {:?}", action);
-
         match action {
             OKAction::PullRequest(_) => {}
             OKAction::PostToDiscord(post_to_discord) => {
-                let commit = load_commit(&post_to_discord.commit);
-                println!("commit: {:?}", commit);
+                let _ = load_commit(&post_to_discord.commit);
+                //println!("commit: {:?}", commit);
             }
         }
     }

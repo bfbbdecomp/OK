@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use objdiff_core::bindings::report::{Report, ReportItem, ReportItemMetadata, ReportUnit};
+use objdiff_core::bindings::report::{ReportItem, ReportItemMetadata, ReportUnit};
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
