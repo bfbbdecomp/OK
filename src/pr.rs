@@ -45,7 +45,7 @@ impl DiffSummary {
         } else {
             "-"
         };
-        println!("{:?}", self);
+        //println!("{:?}", self);
         let percent = format!("{:.2}%", self.percent_difference);
 
         let emoji = match self.percent_difference {
@@ -108,7 +108,7 @@ impl PullRequestReport {
         let regressions = self.get_regressions();
         let progressions = self.get_progressions();
 
-        println!("{:?}", progressions);
+        //println!("{:?}", progressions);
 
         let regression_count = regressions.len();
         let regressions_exist = regression_count > 0;
