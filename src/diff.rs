@@ -9,6 +9,7 @@ pub struct DifferenceReport {
     pub sections: Vec<ReportItemDifference>,
 }
 
+// TODO: get rid of this and just return DiffSummary
 #[derive(Debug, Serialize, Clone)]
 pub struct ReportItemDifference {
     pub unit_name: String,

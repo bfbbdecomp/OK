@@ -1,10 +1,25 @@
 use crate::diff::{DifferenceReport, ReportItemDifference};
 
+/***
+ *
+ *
+ *
+ *
+ * HEY
+ *
+ *
+ *
+ * THis whole file is hot garbage and I need to refactor it
+ *
+ * But we're just trying to get OK bot talking for now
+ */
+
 #[derive(Debug)]
 pub struct DiffSummary {
     pub unit_name: String,
     pub name: String,
     pub percent_difference: f32,
+    pub size: u64,
     pub size_difference: u64,
 }
 
@@ -18,8 +33,9 @@ impl DiffSummary {
                 Some(demangled) => demangled.clone(),
                 None => diff.name.clone(),
             },
+            size: diff.size,
             percent_difference: percent_diff,
-            size_difference: (((diff.size as f32) * percent_diff) as u64 / 4),
+            size_difference: (((diff.size as f32) * (percent_diff / 100.0)) as u64),
         }
     }
 
@@ -27,12 +43,22 @@ impl DiffSummary {
         let direction = if self.percent_difference > 0.0 {
             "+"
         } else {
-            "foo"
+            "-"
+        };
+        println!("{:?}", self);
+        let percent = format!("{:.2}%", self.percent_difference);
+
+        let emoji = match self.percent_difference {
+            100.00 => "✅",
+            _ => match self.percent_difference > 0.0 {
+                true => "📈",
+                false => "📉",
+            },
         };
 
         format!(
-            "{}: {} ({direction}{})",
-            self.name, self.percent_difference, self.size_difference
+            "{emoji} `{}` - `{}`: {direction}{} ({direction}{})",
+            self.unit_name, self.name, percent, self.size_difference
         )
     }
 }
