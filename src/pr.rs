@@ -8,6 +8,7 @@ pub struct DiffSummary {
     pub size_difference: u64,
 }
 
+// test
 impl DiffSummary {
     pub fn new(diff: &ReportItemDifference) -> Self {
         let percent_diff = diff.new_fuzzy_match_percent - diff.old_fuzzy_match_percent;
