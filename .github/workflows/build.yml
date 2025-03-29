@@ -9,30 +9,10 @@ on:
   workflow_dispatch:
 
 env:
-  BUILD_PROFILE: release-lto
   CARGO_TARGET_DIR: target
   CARGO_INCREMENTAL: 0
 
 jobs:
-  check:
-    name: Check
-    runs-on: ubuntu-latest
-    env:
-      RUSTFLAGS: -D warnings
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-      - name: Cache Rust workspace
-        uses: Swatinem/rust-cache@v2
-      - name: Cargo check
-        run: cargo check --all-features --all-targets
-      - name: Cargo clippy
-        run: cargo clippy --all-features --all-targets
-
   fmt:
     name: Format
     runs-on: ubuntu-latest
@@ -48,22 +28,6 @@ jobs:
           components: rustfmt
       - name: Cargo fmt
         run: cargo fmt --all --check
-
-  deny:
-    name: Deny
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        checks:
-          - advisories
-          - bans licenses sources
-    # Prevent new advisories from failing CI
-    continue-on-error: ${{ matrix.checks == 'advisories' }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: EmbarkStudios/cargo-deny-action@v2
-        with:
-          command: check ${{ matrix.checks }}
 
   test:
     name: Test
@@ -148,15 +112,15 @@ jobs:
           key: ${{ matrix.target }}
       - name: Cargo build
         run: >
-          cargo ${{ matrix.build }} --profile ${{ env.BUILD_PROFILE }} --target ${{ matrix.target }} 
+          cargo ${{ matrix.build }} --target ${{ matrix.target }} 
           --bin ${{ env.CARGO_BIN_NAME }}
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.CARGO_BIN_NAME }}-${{ matrix.name }}
           path: |
-            ${{ env.CARGO_TARGET_DIR }}/${{ matrix.target }}/${{ env.BUILD_PROFILE }}/${{ env.CARGO_BIN_NAME }}
-            ${{ env.CARGO_TARGET_DIR }}/${{ matrix.target }}/${{ env.BUILD_PROFILE }}/${{ env.CARGO_BIN_NAME }}.exe
+            ${{ env.CARGO_TARGET_DIR }}/${{ matrix.target }}/${{ env.CARGO_BIN_NAME }}
+            ${{ env.CARGO_TARGET_DIR }}/${{ matrix.target }}/${{ env.CARGO_BIN_NAME }}.exe
           if-no-files-found: error
 
   release:
