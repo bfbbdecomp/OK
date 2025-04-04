@@ -11,7 +11,7 @@ use std::{
 use args::{OKAction, OKArgs};
 use commit::Commit;
 use diff::find_differences;
-use objdiff_core::bindings::report::{Report, ReportItem};
+use objdiff_core::bindings::report::Report;
 use pr::PullRequestReport;
 
 fn main() {
@@ -20,7 +20,17 @@ fn main() {
     let previous = load_report(&args.previous);
     let current = load_report(&args.current);
 
-    let diffs = find_differences(previous.units, current.units);
+    let mut diffs = find_differences(previous.units, current.units);
+
+    diffs.sections = diffs
+        .sections
+        .iter()
+        // ghetto hack to remove this one text section which is showing up in all PRS:
+        // might be related to this:
+        // https://github.com/encounter/objdiff/issues/120#issuecomment-2770545367
+        .filter(|x| !(x.unit_name == "main/SB/Game/zNPCTypeCommon" && x.name == ".text"))
+        .map(|x| x.clone())
+        .collect();
 
     let diff_json = serde_json::to_string_pretty(&diffs).expect("Failed to serialize diffs");
     let mut file = File::create("diff.json").unwrap();

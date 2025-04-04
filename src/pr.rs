@@ -18,9 +18,10 @@ use crate::diff::{DifferenceReport, ReportItemDifference};
 pub struct DiffSummary {
     pub unit_name: String,
     pub name: String,
+    pub fuzzy_percent: f32,
     pub percent_difference: f32,
     pub size: u64,
-    pub size_difference: u64,
+    pub size_difference: i64,
 }
 
 // test
@@ -34,8 +35,9 @@ impl DiffSummary {
                 None => diff.name.clone(),
             },
             size: diff.size,
+            fuzzy_percent: diff.new_fuzzy_match_percent,
             percent_difference: percent_diff,
-            size_difference: (((diff.size as f32) * (percent_diff / 100.0)) as u64),
+            size_difference: (((diff.size as f32) * (percent_diff / 100.0)) as i64),
         }
     }
 
@@ -43,22 +45,23 @@ impl DiffSummary {
         let direction = if self.percent_difference > 0.0 {
             "+"
         } else {
-            "-"
+            "" // Don't need to add the minus sign, Rust will do it on its own
         };
-        //println!("{:?}", self);
-        let percent = format!("{:.2}%", self.percent_difference);
 
-        let emoji = match self.percent_difference {
+        //println!("{:?}", self);
+        let percent = format!("{:.2}%", self.fuzzy_percent);
+
+        let emoji = match self.fuzzy_percent {
             100.00 => "✅",
             _ => match self.percent_difference > 0.0 {
                 true => "📈",
-                false => "📉",
+                false => "⚠️",
             },
         };
 
         format!(
-            "{emoji} `{}` - `{}`: {direction}{} ({direction}{})",
-            self.unit_name, self.name, percent, self.size_difference
+            "{emoji} `{} - {}` {direction}{} bytes -> {percent}",
+            self.unit_name, self.name, self.size_difference
         )
     }
 }
@@ -90,17 +93,22 @@ impl PullRequestReport {
             .iter()
             .filter(|i| i.new_fuzzy_match_percent < i.old_fuzzy_match_percent)
             .map(|i| Regression(DiffSummary::new(i)))
+            .filter(|x| x.0.size_difference != 0)
             .collect()
     }
 
     pub fn get_progressions(&self) -> Vec<Progression> {
         let mut items: Vec<ReportItemDifference> = self.diffs.sections.clone();
-        items.extend(self.diffs.functions.clone());
+        items.sort_by_key(|x| x.size as i32 * -1);
+        let mut fns = self.diffs.functions.clone();
+        fns.sort_by_key(|x| x.size as i32 * -1);
+        items.extend(fns);
 
         items
             .iter()
             .filter(|i| i.new_fuzzy_match_percent > i.old_fuzzy_match_percent)
             .map(|i| Progression(DiffSummary::new(i)))
+            .filter(|x| x.0.size_difference != 0)
             .collect()
     }
 
@@ -122,6 +130,7 @@ impl PullRequestReport {
             false => "No Regressions 🎉".to_owned(),
             true => format!("Regressions: {regression_count}"),
         };
+
         let regressions_string = match regressions_exist {
             false => "".to_owned(),
             true => {
@@ -144,9 +153,29 @@ impl PullRequestReport {
             }
         };
 
+        let size_diff = progressions
+            .iter()
+            .map(|x| x.0.size_difference)
+            .sum::<i64>();
+        let size_direction = if size_diff >= 0 { "+" } else { "" };
+
+        let ok_rating = match size_diff {
+            diff if diff >= 5_000 => "You are a decomp GOD, can I have your autograph?",
+            diff if diff >= 2_000 => "Amazing contribution, you are the decomp GOAT 🐐",
+            diff if diff >= 1_000 => "A Fantastic contribution! ✨🎉",
+            diff if diff > 750 => "Ay, dios mio, gracias por la contribución!",
+            diff if diff > 500 => "A solid contribution, Спасибо!",
+            diff if diff > 250 => "A decent contribution. Thank you!",
+            diff if diff < 100 => "A small but commendable contribution",
+            diff if diff < 0 => "You're going in the wrong direction..?",
+            diff if diff < -1_000 => "You really screwed up 🙉",
+            _ => "I don't have an opinion",
+        };
+
         let lines: Vec<String> = vec![
-            // h
             format!("# {}", header),
+            format!("{}{} bytes", size_direction, size_diff),
+            format!("🆗 Bot Rating: {}", ok_rating),
             format!("## {}", regressions_header),
             regressions_string,
             format!("## {}", progress_header),
