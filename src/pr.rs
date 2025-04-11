@@ -155,20 +155,28 @@ impl PullRequestReport {
 
         let size_diff = progressions
             .iter()
+            // ghetto hack to stop double counting progress
+            .filter(|x| x.0.name != ".text")
             .map(|x| x.0.size_difference)
             .sum::<i64>();
         let size_direction = if size_diff >= 0 { "+" } else { "" };
 
         let ok_rating = match size_diff {
+            diff if diff >= 10_000 => {
+                "If I could feel emotions, I would be crying tears of joy right now."
+            }
             diff if diff >= 5_000 => "You are a decomp GOD, can I have your autograph?",
             diff if diff >= 2_000 => "Amazing contribution, you are the decomp GOAT 🐐",
-            diff if diff >= 1_000 => "A Fantastic contribution! ✨🎉",
-            diff if diff > 750 => "Ay, dios mio, gracias por la contribución!",
+            diff if diff >= 1_000 => "A fantastic contribution! ✨🎉",
+            diff if diff > 750 => "Ay, díos mio, gracias por la contribución!",
             diff if diff > 500 => "A solid contribution, Спасибо!",
             diff if diff > 250 => "A decent contribution. Thank you!",
-            diff if diff < 100 => "A small but commendable contribution",
+            diff if diff >= 100 => "A fair and commendable contribution",
+            diff if diff == 0 => "Zero progress? What are you up to? 👀",
+            diff if diff < 100 => "A small contribution, every little bit helps!",
             diff if diff < 0 => "You're going in the wrong direction..?",
             diff if diff < -1_000 => "You really screwed up 🙉",
+            diff if diff < -10_000 => "You are everything I am against, pure anti-OK evil.",
             _ => "I don't have an opinion",
         };
 
