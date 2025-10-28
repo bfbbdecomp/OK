@@ -7,11 +7,11 @@ use argp::FromArgs;
 pub struct OKArgs {
     /// Path to the previous Objdiff report file
     #[argp(option)]
-    pub previous: String,
+    pub changes: String,
 
     /// Path to the current Objdiff report file
-    #[argp(option)]
-    pub current: String,
+    // #[argp(option)]
+    // pub report: String,
 
     #[argp(subcommand)]
     pub action: Option<OKAction>,
