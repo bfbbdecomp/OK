@@ -1,6 +1,7 @@
 mod args;
 mod commit;
 mod pr;
+mod website;
 
 use std::{
     fs::File,
@@ -11,7 +12,7 @@ use args::{OKAction, OKArgs};
 use commit::Commit;
 use objdiff_core::bindings::report::{Changes, Report};
 
-use crate::pr::generate_pr_report;
+use crate::{pr::generate_pr_report, website::AsmInfo};
 
 fn main() {
     let args: OKArgs = argp::parse_args_or_exit(argp::DEFAULT);
@@ -33,6 +34,12 @@ fn main() {
                 // let commit = load_commit(&post_to_discord.commit);
                 // println!("commit: {:?}", commit);
             }
+            OKAction::BuildWebsite(args) => {
+                let report = load_report_json(&args.report);
+                let asm_info = load_asm_json(&args.asm_json);
+                let first = asm_info.iter().nth(0).unwrap();
+                println!("{:?}", first);
+            }
         }
     }
 }
@@ -44,6 +51,11 @@ fn load_change_json(path: &str) -> Changes {
 
 fn load_report_json(path: &str) -> Report {
     let json = std::fs::read_to_string(path).expect("Unable to read change file");
+    serde_json::from_str(&json).unwrap()
+}
+
+fn load_asm_json(path: &str) -> Vec<AsmInfo> {
+    let json = std::fs::read_to_string(path).expect("Unable to read ASM json");
     serde_json::from_str(&json).unwrap()
 }
 

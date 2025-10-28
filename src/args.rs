@@ -9,10 +9,6 @@ pub struct OKArgs {
     #[argp(option)]
     pub changes: String,
 
-    /// Path to the current Objdiff report file
-    // #[argp(option)]
-    // pub report: String,
-
     #[argp(subcommand)]
     pub action: Option<OKAction>,
 }
@@ -21,6 +17,7 @@ pub struct OKArgs {
 #[argp(subcommand)]
 pub enum OKAction {
     PullRequest(PullRequest),
+    BuildWebsite(BuildWebsite),
     PostToDiscord(PostToDiscord),
 }
 
@@ -42,7 +39,15 @@ pub struct PostToDiscord {
     pub add_commentary: bool,
 }
 
-// 1. compare two reports and create a struct containing differences
-//      a) save differences to a file?
-//      b) post differences to discord?
-// 2. load and save progress report to a sensible json format, we only care about game
+/// Build the files needed for the progress website
+#[derive(FromArgs, Debug)]
+#[argp(subcommand, name = "website")]
+pub struct BuildWebsite {
+    /// Path to the latest Objdiff report file
+    #[argp(option)]
+    pub report: String,
+
+    /// Path to the cached assembly metadata
+    #[argp(option)]
+    pub asm_json: String,
+}
