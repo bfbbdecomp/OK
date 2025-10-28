@@ -12,7 +12,10 @@ use args::{OKAction, OKArgs};
 use commit::Commit;
 use objdiff_core::bindings::report::{Changes, Report};
 
-use crate::{pr::generate_pr_report, website::AsmInfo};
+use crate::{
+    pr::generate_pr_report,
+    website::{AsmInfo, generate_website_data},
+};
 
 fn main() {
     let args: OKArgs = argp::parse_args_or_exit(argp::DEFAULT);
@@ -38,7 +41,11 @@ fn main() {
                 let report = load_report_json(&args.report);
                 let asm_info = load_asm_json(&args.asm_json);
                 let first = asm_info.iter().nth(0).unwrap();
-                println!("{:?}", first);
+                let game = generate_website_data(&report, &asm_info);
+                let mut file = File::create("website.json").unwrap();
+                file.write_all(serde_json::to_string_pretty(&game).unwrap().as_bytes())
+                    .unwrap();
+                println!("{:?}", game);
             }
         }
     }
